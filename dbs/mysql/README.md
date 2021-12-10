@@ -5,4 +5,4 @@
 
 
 ## mysql.yaml
-- mysql 单点k8s部署
+- mysql k8s单点部署
