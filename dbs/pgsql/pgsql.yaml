@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: infra
+  labels:
+    name: postgresql
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: postgresql
+  template:
+    metadata:
+      name: postgresql
+      labels:
+        name: postgresql
+    spec:
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: postgresql
+      containers:
+      - name: postgresql
+        image: sameersbn/postgresql:11-20200524
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: DB_USER
+          value: admin
+        - name: DB_PASS
+          value: xxxxxx
+        - name: DB_NAME
+          value: gitlab_production
+        - name: DB_EXTENSION
+          value: pg_trgm,btree_gist
+        - name: TZ
+          value: Asia/Shanghai
+        ports:
+        - name: postgres
+          containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgresql
+          name: data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: infra
+  labels:
+    name: postgresql
+spec:
+  type: NodePort
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+#       nodePort: 30639
+  selector:
+    name: postgresql
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+ name: postgresql
+ namespace: infra
+spec:
+ accessModes:
+ - ReadWriteOnce
+ resources:
+   requests:
+     storage: 100Gi
+ storageClassName: hostpath
