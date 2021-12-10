@@ -1,0 +1,16 @@
+# helm -n infra install minio -f minio.yaml bitnami/minio --version 6.8.1
+accessKey:
+  password: minio
+secretKey:
+  password: minio123
+
+persistence:
+  size: 300Gi
+  storageClass: hostpath
+
+service:
+  type: NodePort
+  # nodePort: 31446
+
+volumePermissions:
+  enabled: true
