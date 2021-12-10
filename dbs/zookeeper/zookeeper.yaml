@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: infra
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: zookeeper
+      containers:
+      - name: zookeeper
+        image: zookeeper:3.5.8
+        ports:
+        - containerPort: 2181
+        volumeMounts:
+        - mountPath: /data/data
+          name: data
+          subPath: data
+        - mountPath: /data/datalog
+          name: data
+          subPath: datalog
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        - name: ZOO_MAX_CLIENT_CNXNS
+          value: "200"
+        - name: ZOO_ADMINSERVER_ENABLED
+          value: "false"
+        - name: ZOO_DATA_LOG_DIR
+          value: /data/datalog
+        - name: ZOO_DATA_DIR
+          value: /data/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: infra
+spec:
+  type: NodePort
+  selector:
+    app: zookeeper
+  ports:
+  - port: 2181
+    targetPort: 2181
+    name: zookeeper
+    # nodePort: 32104
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zookeeper
+  namespace: infra
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: hostpath
