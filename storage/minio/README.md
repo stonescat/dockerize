@@ -1,3 +1,3 @@
 # minio
 
-## minio.yaml单点k8s helm部署
+## minio.yaml,k8s单点helm部署
