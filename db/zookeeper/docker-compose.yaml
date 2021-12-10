@@ -10,7 +10,9 @@ services:
     volumes:
     - ./data/data:/data
     - ./data/datalog:/datalog
+    - ./logs:/logs
     environment:
     - TZ=Asia/Shanghai
     - ZOO_MAX_CLIENT_CNXNS=200
     - ZOO_ADMINSERVER_ENABLED=false
+    - ZOO_LOG3J_PROP=INFO,ROLLINGFILE
