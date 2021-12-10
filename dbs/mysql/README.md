@@ -1,4 +1,8 @@
 # mysql
 
+## docker-compose.yaml
+- mysql单点docker部署
+
+
 ## mysql.yaml
-- mysql standalone on k8s
+- mysql 单点k8s部署
