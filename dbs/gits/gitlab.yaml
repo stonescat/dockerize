@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab
+  namespace: infra
+  labels:
+    name: gitlab
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: gitlab
+  template:
+    metadata:
+      name: gitlab
+      labels:
+        name: gitlab
+    spec:
+      #hostAliases:
+      #- ip: "10.0.2.51"
+      #  hostnames:
+      #  - "ldap.aaaa.com"
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: gitlab
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        image: sameersbn/gitlab:13.3.1
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c", "chown -R 1000:1000 /home/git/data"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: data
+          mountPath: /home/git/data
+          subPath: gitlab
+      containers:
+      - name: gitlab
+        image: sameersbn/gitlab:13.3.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        - name: GITLAB_TIMEZONE
+          value: Beijing
+        - name: GITLAB_SECRETS_DB_KEY_BASE
+          value: long-and-random-alpha-numeric-string
+        - name: GITLAB_SECRETS_SECRET_KEY_BASE
+          value: long-and-random-alpha-numeric-string
+        - name: GITLAB_SECRETS_OTP_KEY_BASE
+          value: long-and-random-alpha-numeric-string
+        - name: GITLAB_ROOT_PASSWORD
+          value: xxxxxx
+        - name: GITLAB_ROOT_EMAIL
+          value: xxx@126.com
+        - name: GITLAB_HOST
+          value: 192.168.79.97
+        - name: GITLAB_PORT
+          value: "30023"
+        - name: GITLAB_SSH_PORT
+          value: "30022"
+        - name: GITLAB_NOTIFY_ON_BROKEN_BUILDS
+          value: "true"
+        - name: GITLAB_NOTIFY_PUSHER
+          value: "false"
+        - name: GITLAB_BACKUP_SCHEDULE
+          value: daily
+        - name: GITLAB_BACKUP_TIME
+          value: "01:00"
+        - name: DB_TYPE
+          value: postgres
+        - name: DB_HOST
+          value: postgresql
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: gitlab
+        - name: DB_PASS
+          value: xxxxxx
+        - name: DB_NAME
+          value: gitlab_production
+        - name: REDIS_HOST
+          value: 192.168.79.97
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB_NUMBER
+          value: "1"
+
+        #- name: LDAP_ENABLED
+        #  value: "true"
+        #- name: LDAP_ALLOW_USERNAME_OR_EMAIL_LOGIN
+        #  value: "true"
+        #- name: LDAP_HOST
+        #  value: ldap.aaaa.com
+        #- name: LDAP_PORT
+        #  value: "636"
+        #- name: LDAP_METHOD
+        #  value: simple_tls
+        #- name: LDAP_VERIFY_SSL
+        #  value: "false"
+        #- name: LDAP_BIND_DN
+        #  value: cn=readuser,dc=ldap,dc=aaaa,dc=com
+        #- name: LDAP_PASS
+        #  value: "xxxxxx"
+        #- name: LDAP_BASE
+        #  value: ou=devops,dc=ldap,dc=aaaa,dc=com
+        #- name: LDAP_UID
+        #  value: cn
+
+        ports:
+        - name: http
+          containerPort: 80
+        - name: ssh
+          containerPort: 22
+        volumeMounts:
+        - mountPath: /home/git/data
+          name: data
+          subPath: gitlab
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab
+  namespace: infra
+  labels:
+    name: gitlab
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      #nodePort: 30023
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      #nodePort: 30022
+  selector:
+    name: gitlab
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+ name: gitlab
+ namespace: infra
+spec:
+ accessModes:
+ - ReadWriteOnce
+ resources:
+   requests:
+     storage: 100Gi
+ storageClassName: hostpath
