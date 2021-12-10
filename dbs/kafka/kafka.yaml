@@ -1,0 +1,70 @@
+# helm -n infra install kafka -f myvalues.yaml bitnami/kafka --version 10.3.3
+replicaCount: 3
+
+#heapOpts: -Xmx2048m -Xms2048m
+
+persistence:
+  storageClass: hostpath
+  size: 50Gi
+
+#logRetentionHours: 1
+
+zookeeper:
+  enabled: false
+
+externalZookeeper:
+  servers: zookeeper:2181
+
+externalAccess:
+  enabled: true
+  service:
+    type: NodePort
+    nodePorts:
+      - 31004
+      - 31005
+      - 31006
+    domain: 192.168.79.97
+
+rbac:
+  create: true
+
+#metrics:
+#  jmx:
+#    enabled: true
+
+#tolerations:
+#- key: "app"
+#  operator: "Equal"
+#  value: "xxx"
+#  effect: "NoSchedule"
+#
+#nodeSelector:
+#  app: xxx
+#
+#affinity:
+#  podAntiAffinity:
+#    requiredDuringSchedulingIgnoredDuringExecution:  # 硬策略
+#    - labelSelector:
+#        matchExpressions:
+#        - key: app.kubernetes.io/name
+#          operator: In
+#          values:
+#          - kafka
+#      topologyKey: kubernetes.io/hostname
+#
+
+
+#livenessProbe:
+#  tcpSocket:
+#    port: kafka
+#  initialDelaySeconds: 600
+#  timeoutSeconds: 5
+#  failureThreshold: 5
+#  periodSeconds: 10
+#  successThreshold: 1
+#readinessProbe:
+#  tcpSocket:
+#    port: kafka
+#  initialDelaySeconds: 120
+#  failureThreshold: 6
+#  timeoutSeconds: 5
