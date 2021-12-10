@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  jcr:
+    image: releases-docker.jfrog.io/jfrog/artifactory-jcr:latest
+    container_name: jcr
+    ports:
+    - "18082:8082"
+    restart: always
+    volumes:
+    - jcr:/var/opt/jfrog/artifactory
+    environment:
+    - TZ=Asia/Shanghai
+
+volumes:
+  jcr: {}
